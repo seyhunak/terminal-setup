@@ -1,0 +1,22 @@
+{
+  "_comment": "Template — copy to ~/.claude/settings.json and adjust. Never commit tokens here. Live settings stay local; this is the shareable baseline.",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git worktree list:*)",
+      "Bash(ls:*)",
+      "Bash(eza:*)",
+      "Bash(rg:*)",
+      "Bash(fd:*)"
+    ],
+    "ask": ["Bash(*)", "Edit", "Write"],
+    "deny": []
+  },
+  "enabledPlugins": {},
+  "effortLevel": "medium"
+}

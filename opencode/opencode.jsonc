@@ -1,0 +1,45 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // Shared agentic defaults. Secrets come from env (use `op run --env-file=.env -- opencode`).
+  // Docs: https://opencode.ai/docs/config
+  "theme": "catppuccin",
+  "autoupdate": true,
+  "permission": {
+    // Read-only shell is free; edits/deploys ask first.
+    "bash": {
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git worktree list*": "allow",
+      "ls*": "allow",
+      "eza*": "allow",
+      "rg*": "allow",
+      "fd*": "allow",
+      "cat*": "allow",
+      "head*": "allow",
+      "tail*": "allow",
+      "wc*": "allow",
+      "echo*": "allow",
+      "true": "allow",
+      "*": "ask"
+    },
+    "edit": "ask"
+  },
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "."],
+      "enabled": true
+    },
+    "github": {
+      // Provide via env: GITHUB_TOKEN (never commit it).
+      // Run: op run --env-file=.env -- opencode
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}"
+      },
+      "enabled": false
+    }
+  }
+}

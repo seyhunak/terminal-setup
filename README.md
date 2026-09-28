@@ -7,39 +7,59 @@
 ![Catppuccin](https://img.shields.io/badge/theme-Catppuccin_Latte-EF9F76?style=flat-square&logo=ui3&logoColor=4C4F69)
 ![Nerd Font](https://img.shields.io/badge/font-JetBrainsMono_Nerd-8839EF?style=flat-square&logo=typography&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-40A02B?style=flat-square)
+![tmux](https://img.shields.io/badge/sessions-tmux-40A02B?style=flat-square&logo=tmux&logoColor=white)
+![1Password](https://img.shields.io/badge/secrets-1Password-0094F5?style=flat-square&logo=1password&logoColor=white)
 
-My macOS terminal setup: **Ghostty + Starship (Catppuccin Powerline Latte) + Fish**. Nerd Font throughout.
+My macOS terminal setup: **Ghostty + Starship (Catppuccin Powerline Latte) + Fish**, wired for agentic dev (opencode / Claude Code / Codex / Crush). Nerd Font throughout.
 
 ## What's inside
 
 | Path | Target | Notes |
 |------|--------|-------|
-| `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups |
-| `starship/starship.toml` | `~/.config/starship.toml` | `catppuccin-powerline` preset, `palette = 'catppuccin_latte'` |
-| `fish/` | `~/.config/fish/` | `config.fish` + `conf.d/` + `functions/` + `completions/` — starship/zoxide/fzf init, eza abbrs, vi bindings |
+| `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups, `Cmd+Shift+A` agent layout |
+| `starship/starship.toml` | `~/.config/starship.toml` | `catppuccin-powerline` preset, `palette = 'catppuccin_latte'`, + `mise` / `direnv` / `docker_context` segments |
+| `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `op-env`, `agent-new`, vi bindings |
+| `tmux/tmux.conf` | `~/.tmux.conf` | Truecolor for Ghostty, vi copy, 100k history, Catppuccin Latte status |
+| `scripts/` | on PATH via fish | `agent-layout.sh` (editor/agent/server tmux session), `git-worktree-add.sh` (isolated worktree per agent) |
+| `opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` | Read-only shell allowlist, filesystem + GitHub (opt-in) MCP, secrets from env |
+| `claude/settings.shared.json` | template for `~/.claude/settings.json` | Safe permission baseline (live hooks untouched) |
+| `git/gitconfig.extra` | included via `include.path` | delta pager, `push.autoSetupRemote`, rerere, `main` default |
+| `git/hooks/pre-commit` | copy to `.git/hooks/` per repo | Blocks `ghp_/sk-/AKIA` + private-key commits |
+| `AGENTS.md` | copy into agent-driven repos | Environment / secrets / workflow / boundaries |
+| `.env.example` | copy to `.env` (fill via `op inject`) | `GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` as `op://` refs |
 
 ## Requirements
 
-- macOS + [Homebrew](https://brew.sh)
-- [Ghostty](https://ghostty.org), [Fish](https://fishshell.com), [Starship](https://starship.rs)
-- JetBrainsMono Nerd Font: `brew install --cask font-jetbrains-mono-nerd-font`
-- CLI tools: `brew install eza zoxide fzf lazygit yazi fd bat`
+One command after cloning: `./install.sh` runs `brew bundle` from `Brewfile` (fish, starship, tmux, nvim, git, delta, direnv, mise, asdf, eza, zoxide, fzf, lazygit, yazi, Ghostty, JetBrainsMono Nerd, 1Password CLI, …).
 
 ## Install
 
 ```sh
-git clone https://github.com/seyhunak/dotfiles.git ~/dotfiles
+git clone https://github.com/seyhunak/terminal-setup.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 ```
 
-`install.sh` backs up existing configs to `*.bak.<timestamp>`, then symlinks this repo into `~/.config/`. Reload Ghostty with `Cmd+Shift+,` and open a new tab.
+`install.sh` runs `brew bundle`, backs up existing configs to `*.bak.<timestamp>`, then symlinks this repo into `~/.config/` (+ `~/.tmux.conf`, git `include.path`). Reload Ghostty with `Cmd+Shift+,` and open a new tab.
+
+## Agentic workflow
+
+```fish
+agent-layout.sh                # tmux session `agent`: editor / agent / server
+agent-layout.sh myproj Claude  # custom session + agent command
+agent-new my-feature           # .worktrees/my-feature + tmux window (parallel-safe)
+op-env .env -- opencode        # secrets from 1Password, never exported
+```
+
+- One agent per worktree/branch — never two agents on one branch.
+- Prompt shows `mise` / `direnv` / `docker` context inline (Starship powerline).
+- Diffs via `delta`; secret-looking commits blocked by `pre-commit` hook.
 
 ## Key bits
 
-- **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Ctrl+`` Quake terminal
-- **Starship:** Powerline segments — OS → user → directory → git → lang versions → conda → time → `❯`
-- **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, greeting off, `fish_vi_key_bindings`
+- **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Cmd+Shift+A` agent tmux layout, `Ctrl+`` Quake terminal
+- **Starship:** Powerline segments — OS → user → directory → git → lang/mise/direnv → docker/conda → time → `❯`
+- **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, `oc/ocr/cc/ccr/cx/cr` agents, `opr` 1Password runner, greeting off, `fish_vi_key_bindings`
 
 ## License
 

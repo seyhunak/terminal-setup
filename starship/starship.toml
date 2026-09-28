@@ -1,5 +1,8 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+scan_timeout = 200
+command_timeout = 1000
+
 format = """
 [](red)\
 $os\
@@ -20,7 +23,10 @@ $java\
 $kotlin\
 $haskell\
 $python\
+$mise\
+$direnv\
 [](fg:green bg:sapphire)\
+$docker_context\
 $conda\
 [](fg:sapphire bg:lavender)\
 $time\
@@ -145,6 +151,20 @@ symbol = "  "
 style = "fg:crust bg:sapphire"
 format = '[$symbol$environment ]($style)'
 ignore_base = false
+
+[mise]
+symbol = "mise "
+style = "bg:green"
+format = '[[ $symbol$health ](fg:crust bg:green)]($style)'
+disabled = false
+
+[direnv]
+symbol = "direnv "
+style = "bg:green"
+format = '[[ $symbol$loaded/$allowed ](fg:crust bg:green)]($style)'
+allowed_msg = "✓"
+denied_msg = "✗"
+disabled = false
 
 [time]
 disabled = false

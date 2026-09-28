@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# pre-commit — block accidental secret commits (ghp_/gho_/sk-/AKIA/aws secret).
+# Install per-repo: cp ~/dotfiles/git/hooks/pre-commit .git/hooks/pre-commit
+set -euo pipefail
+
+PATTERN='ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[bpas]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+
+staged="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)"
+[[ -z "$staged" ]] && exit 0
+
+hits="$(echo "$staged" | xargs grep -nE "$PATTERN" 2>/dev/null || true)"
+if [[ -n "$hits" ]]; then
+  echo "pre-commit: possible secret in staged files:" >&2
+  echo "$hits" >&2
+  echo "Remove it (use 1Password refs) or force with --no-verify if false positive." >&2
+  exit 1
+fi
+exit 0

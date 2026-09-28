@@ -1,0 +1,23 @@
+# Shared git defaults for agentic dev. Included from ~/.gitconfig via:
+#   git config --global include.path ~/dotfiles/git/gitconfig.extra
+[core]
+	pager = delta --navigate --line-numbers --side-by-side
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = true
+[push]
+	autoSetupRemote = true
+[pull]
+	rebase = false
+[rerere]
+	enabled = true
+[diff]
+	colorMoved = plain
+[status]
+	short = true
+	branch = true
+[init]
+	defaultBranch = main
