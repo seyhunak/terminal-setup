@@ -10,14 +10,15 @@
 ![tmux](https://img.shields.io/badge/sessions-tmux-40A02B?style=flat-square&logo=tmux&logoColor=white)
 ![1Password](https://img.shields.io/badge/secrets-1Password-0094F5?style=flat-square&logo=1password&logoColor=white)
 
-My macOS terminal setup: **Ghostty + Starship (Catppuccin Powerline Latte) + Fish**, wired for agentic dev (opencode / Claude Code / Codex / Crush). Nerd Font throughout.
+My macOS terminal setup: **Ghostty + Starship (stellar `a3chron/ctp-blue`) + Fish**, wired for agentic dev (opencode / Claude Code / Codex / Crush). Nerd Font throughout.
 
 ## What's inside
 
 | Path | Target | Notes |
 |------|--------|-------|
 | `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups, `Cmd+Shift+A` agent layout |
-| `starship/starship.toml` | `~/.config/starship.toml` | `catppuccin-powerline` preset, `palette = 'catppuccin_latte'`, + `mise` / `direnv` / `docker_context` segments |
+| `starship/starship.toml` | archived (pre-stellar backup, also `stellar apply seyhunakyurek/backup@1.0`) | old `catppuccin-powerline` hand-rolled prompt, replaced by stellar |
+| `stellar` | `~/.config/starship.toml` -> `~/.config/stellar/a3chron/ctp-blue/1.1.toml` | `stellar apply a3chron/ctp-blue`, completions in `fish/completions/stellar.fish` |
 | `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `op-env`, `agent-new`, vi bindings |
 | `tmux/tmux.conf` | `~/.tmux.conf` | Truecolor for Ghostty, vi copy, 100k history, Catppuccin Latte status |
 | `scripts/` | on PATH via fish | `agent-layout.sh` (editor/agent/server tmux session), `git-worktree-add.sh` (isolated worktree per agent) |
@@ -30,7 +31,7 @@ My macOS terminal setup: **Ghostty + Starship (Catppuccin Powerline Latte) + Fis
 
 ## Requirements
 
-One command after cloning: `./install.sh` runs `brew bundle` from `Brewfile` (fish, starship, tmux, nvim, git, delta, direnv, mise, asdf, eza, zoxide, fzf, lazygit, yazi, Ghostty, JetBrainsMono Nerd, 1Password CLI, …).
+One command after cloning: `./install.sh` runs `brew bundle` from `Brewfile` (fish, starship, tmux, nvim, git, delta, direnv, mise, asdf, eza, zoxide, fzf, lazygit, yazi, Ghostty, JetBrainsMono Nerd, 1Password CLI, …) plus the stellar installer (`~/.local/bin/stellar`) and applies `a3chron/ctp-blue`.
 
 ## Install
 
@@ -40,7 +41,7 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-`install.sh` runs `brew bundle`, backs up existing configs to `*.bak.<timestamp>`, then symlinks this repo into `~/.config/` (+ `~/.tmux.conf`, git `include.path`). Reload Ghostty with `Cmd+Shift+,` and open a new tab.
+`install.sh` runs `brew bundle`, backs up existing configs to `*.bak.<timestamp>`, then symlinks this repo into `~/.config/` (+ `~/.tmux.conf`, git `include.path`). Starship is managed by stellar (`stellar apply a3chron/ctp-blue`), not symlinked. Reload Ghostty with `Cmd+Shift+,` and open a new tab.
 
 ## Agentic workflow
 
@@ -52,13 +53,13 @@ op-env .env -- opencode        # secrets from 1Password, never exported
 ```
 
 - One agent per worktree/branch — never two agents on one branch.
-- Prompt shows `mise` / `direnv` / `docker` context inline (Starship powerline).
+- `mise` / `direnv` / `docker` no longer shown inline (not in upstream `ctp-blue`; re-add via local stellar overlay if wanted).
 - Diffs via `delta`; secret-looking commits blocked by `pre-commit` hook.
 
 ## Key bits
 
 - **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Cmd+Shift+A` agent tmux layout, `Ctrl+`` Quake terminal
-- **Starship:** Powerline segments — OS → user → directory → git → lang/mise/direnv → docker/conda → time → `❯`
+- **Starship (stellar `a3chron/ctp-blue@1.1`, `catppuccin_mocha`):** 3-line box — shell/nix/memory + node/python/go/ocaml → user/host/dir/git/cmd-duration → battery + `──╌╌`. Old powerline config archived; `mise`/`direnv`/`docker` segments not in upstream theme.
 - **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, `oc/ocr/cc/ccr/cx/cr` agents, `opr` 1Password runner, greeting off, `fish_vi_key_bindings`
 
 ## License
