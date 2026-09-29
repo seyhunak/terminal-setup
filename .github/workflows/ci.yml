@@ -43,6 +43,8 @@ jobs:
 
       - name: yaml parses
         run: |
+          # PyYAML is not in the runner's python3 by default.
+          pip3 install --quiet --disable-pip-version-check pyyaml
           for f in aider/aider.conf.yml; do
             echo "== $f"
             python3 -c "import sys,yaml; yaml.safe_load(open(sys.argv[1])); print('OK')" "$f"
