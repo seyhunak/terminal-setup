@@ -15,6 +15,11 @@
 # Per-agent parallel worktrees (git-worktree-add.sh / agent-new)
 .worktrees/
 
+# aider drops these in the working tree when it runs
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v*/
+
 # Generated completions (written to ~/.config/fish/completions by install.sh)
 fish/completions/stellar.fish
 fish/completions/grok.fish

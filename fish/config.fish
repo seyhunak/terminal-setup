@@ -42,14 +42,29 @@ abbr -a gp 'git push'
 abbr -a v nvim
 abbr -a y yazi
 abbr -a z zoxide
-# agents (safe defaults — add --yolo/--dangerously-skip-permissions explicitly per run)
-abbr -a oc 'opencode'
-abbr -a ocr 'opencode --continue'
-abbr -a cc 'claude'
-abbr -a ccr 'claude --continue'
-abbr -a cx 'codex'
-abbr -a cr 'crush'
-abbr -a co 'copilot'
+# Agent CLIs. abbr_if registers the shortcut only when the binary exists, so a
+# clone on a machine without e.g. aider doesn't collect dead abbrs.
+# Safe defaults throughout: no --yolo, no --dangerously-bypass-approvals.
+# codex runs the `dotfiles` profile (sandbox workspace-write, on-request approval).
+function abbr_if --description 'abbr $argv[1] -> $argv[2..] if the command exists'
+    set -l key $argv[1]
+    set -e argv[1]
+    if command -q $argv[1]
+        abbr -a $key $argv
+    end
+end
+
+abbr_if oc  opencode
+abbr_if ocr opencode --continue
+abbr_if cc  claude
+abbr_if ccr claude --continue
+abbr_if cx  codex -p dotfiles
+abbr_if cxr codex -p dotfiles resume --last
+abbr_if cr  crush
+abbr_if co  copilot
+abbr_if cn  cline
+abbr_if ad  aider
+abbr_if gem gemini
 # 1Password: inject secrets per-command, e.g. `opr --env-file=.env -- opencode`
 abbr -a opr 'op run --'
 # agentic workflows

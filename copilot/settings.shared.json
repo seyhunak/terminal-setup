@@ -1,0 +1,23 @@
+{
+  "_comment": "Template — copy to ~/.copilot/settings.json and merge, it is not symlinked. Copilot's own CLI manages ~/.copilot/config.json (state: firstLaunchAt, installedPlugins); this file is the user-settings layer and is where model/allowedUrls/permissions go.",
+  "model": "auto",
+
+  "//": "Permission keys. Copilot prompts for anything not listed, so start closed and widen. Verified against copilot CLI 1.0.82: --allow-tool / --deny-tool / --allow-url / --deny-url exist and are accepted. Note: -p/--prompt mode did NOT enforce deniedTools or --deny-tool on a local .env read in testing, so treat these as a guardrail for interactive use, not a hard boundary. Keep secrets out of the working tree and inject per-command via `op run --env-file=.env -- copilot`.",
+  "allowedTools": [
+    "bash(git status:*)",
+    "bash(git diff:*)",
+    "bash(git log:*)",
+    "bash(ls:*)",
+    "bash(rg:*)"
+  ],
+  "deniedTools": [
+    "bash(op:*)",
+    "bash(security:*)"
+  ],
+  "deniedUrls": [],
+
+  "allowedUrls": [
+    "http://localhost:3000"
+  ],
+  "enabledPlugins": {}
+}

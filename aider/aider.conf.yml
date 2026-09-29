@@ -1,0 +1,19 @@
+# aider.conf.yml — shared baseline, linked to ~/.aider.conf.yml by install.sh.
+#
+# Aider reads .aider.conf.yml from the git root, then cwd, then $HOME, and the
+# first match wins, so this is a floor that a project-level file can still
+# override. Verified: `aider --verbose` lists the file it picked up.
+#
+# Docs: aider --help (-c/--config, and the env var equivalents)
+
+# Aider auto-commits every LLM change by default. On this setup agents own their
+# own branches and the human reviews the diff, so silent auto-commits would hide
+# exactly the changes worth reviewing. Leave commits to the agent workflow.
+auto-commits: false
+
+# Don't commit on top of a pre-existing dirty tree either — same reasoning.
+dirty-commits: false
+
+# No telemetry, no version check on launch.
+analytics: false
+check-update: false

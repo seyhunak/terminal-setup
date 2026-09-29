@@ -1,0 +1,25 @@
+# codex/dotfiles.config.toml — shared baseline, applied as a codex *profile*.
+#
+# Linked to ~/.codex/dotfiles.config.toml and selected with:
+#   codex -p dotfiles
+# (the `cx` and `cxr` abbrs in fish/config.fish do this for you)
+#
+# This is a profile layer, not a replacement for ~/.codex/config.toml. Codex
+# merges this on top of your base config, so your model choice, marketplaces,
+# plugins and per-project trust_levels all keep working. That is deliberate:
+# symlinking config.toml itself would clobber the personalized parts.
+#
+# Docs: codex --help (-p/--profile, -s/--sandbox, -a/--ask-for-approval)
+
+# Commands run in a sandbox that can write to the workspace and /tmp, but not
+# to the rest of the machine. This is what stops an agent from writing to
+# ~/.ssh or ~/.aws even if a permission rule is misconfigured.
+sandbox_mode = "workspace-write"
+
+# The model asks before doing anything that needs extra rights or touches the
+# network. Never "never" and never "danger-full-access" in a baseline.
+#
+# Note: `codex exec` (non-interactive) has no --ask-for-approval flag and reports
+# "approval: never" regardless, because it cannot prompt. The sandbox still
+# applies. This setting governs the interactive `cx` / `cxr` sessions.
+approval_policy = "on-request"

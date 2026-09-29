@@ -51,12 +51,18 @@ fi
 GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
 TMUX_CONFIG="$HOME/.tmux.conf"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
+# codex: a profile layer, so ~/.codex/config.toml (model, marketplaces, plugins,
+# per-project trust) is left alone. Selected by `cx` -> codex -p dotfiles.
+CODEX_PROFILE="$HOME/.codex/dotfiles.config.toml"
+AIDER_CONFIG="$HOME/.aider.conf.yml"
 FISH_DIR="$HOME/.config/fish"
 
 repair_stale_symlinks \
   "$GHOSTTY_CONFIG" \
   "$TMUX_CONFIG" \
   "$OPENCODE_CONFIG" \
+  "$CODEX_PROFILE" \
+  "$AIDER_CONFIG" \
   "$FISH_DIR/config.fish" \
   "$FISH_DIR/conf.d" \
   "$FISH_DIR/functions" \
@@ -67,6 +73,8 @@ link_file "$DOTFILES_DIR/ghostty/config" "$GHOSTTY_CONFIG"
 # The old hand-rolled config is kept for reference only, at starship/starship.toml.
 link_file "$DOTFILES_DIR/tmux/tmux.conf" "$TMUX_CONFIG"
 link_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$OPENCODE_CONFIG"
+link_file "$DOTFILES_DIR/codex/dotfiles.config.toml" "$CODEX_PROFILE"
+link_file "$DOTFILES_DIR/aider/aider.conf.yml" "$AIDER_CONFIG"
 
 # fish/: link the entry points individually so unrelated files (backups, local
 # snippets) in ~/.config/fish survive a re-run.
@@ -106,7 +114,11 @@ cat <<EOF
 
 done. Notes:
 - Secrets: use 1Password refs (.env.example). Never commit .env.
-- Claude settings: copy claude/settings.shared.json -> ~/.claude/settings.json if wanted.
+- Linked automatically: ghostty, tmux, opencode, fish, and the agent baselines
+  codex/dotfiles.config.toml + aider/aider.conf.yml.
+- Merge-only templates (not symlinked, so your live settings survive):
+      claude/settings.shared.json -> ~/.claude/settings.json
+      copilot/settings.shared.json -> ~/.copilot/settings.json
 - Per-repo secret hook: cp $DOTFILES_DIR/git/hooks/pre-commit .git/hooks/pre-commit
 - Parallel agents: .worktrees/<name> via 'agent-new <name>' (git-ignored, one agent per branch).
 Reload Ghostty (Cmd+Shift+,) and open a new tab.

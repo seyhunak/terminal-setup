@@ -28,7 +28,7 @@ jobs:
       - name: json parses
         run: |
           # Strip // comments and trailing commas (JSONC), then validate.
-          for f in opencode/opencode.jsonc claude/settings.shared.json; do
+          for f in opencode/opencode.jsonc claude/settings.shared.json copilot/settings.shared.json; do
             echo "== $f"
             python3 - "$f" <<'PY'
           import json, re, sys
@@ -40,6 +40,32 @@ jobs:
           print("OK")
           PY
           done
+
+      - name: yaml parses
+        run: |
+          for f in aider/aider.conf.yml; do
+            echo "== $f"
+            python3 -c "import sys,yaml; yaml.safe_load(open(sys.argv[1])); print('OK')" "$f"
+          done
+
+      - name: toml parses
+        run: |
+          for f in codex/dotfiles.config.toml starship/starship.toml; do
+            echo "== $f"
+            python3 -c "import sys,tomllib; tomllib.load(open(sys.argv[1],'rb')); print('OK')" "$f"
+          done
+
+      - name: codex baseline stays inside the sandbox
+        run: |
+          # A shared codex profile must never widen the sandbox or skip approvals.
+          # Strip comments first — the file explains these values in prose.
+          body="$(grep -v '^\s*#' codex/dotfiles.config.toml)"
+          echo "$body" | grep -q 'sandbox_mode = "workspace-write"'
+          echo "$body" | grep -q 'approval_policy = "on-request"'
+          if echo "$body" | grep -qE 'danger-full-access|approval_policy *= *"never"'; then
+            echo "codex baseline widens the sandbox or disables approvals" >&2
+            exit 1
+          fi
 
       - name: Brewfile parses
         run: |
@@ -71,6 +97,8 @@ jobs:
             "$HOME/.config/ghostty/config" \
             "$HOME/.tmux.conf" \
             "$HOME/.config/opencode/opencode.jsonc" \
+            "$HOME/.codex/dotfiles.config.toml" \
+            "$HOME/.aider.conf.yml" \
             "$HOME/.config/fish/config.fish"; do
             echo "== $f"
             test -e "$f" || { echo "broken symlink: $f"; exit 1; }

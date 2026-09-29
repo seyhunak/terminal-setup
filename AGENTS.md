@@ -3,6 +3,16 @@
 Copy this file (or sections) into any repo you drive with coding agents.
 It matches this terminal setup: Fish + Ghostty + Starship + tmux + worktrees.
 
+## Agents
+
+Seven CLIs are wired in, all with safe defaults (no `--yolo`, no
+`--dangerously-bypass-approvals`): `oc`/`ocr` opencode, `cc`/`ccr` claude,
+`cx`/`cxr` codex, `co` copilot, `cn` cline, `ad` aider, `cr` crush, `gem` gemini.
+A shortcut is only registered if its binary exists.
+
+`cx` runs `codex -p dotfiles`, a profile layered on top of `~/.codex/config.toml`
+that sets `sandbox_mode = "workspace-write"` and `approval_policy = "on-request"`.
+
 ## Environment
 
 - Shell is Fish (`/opt/homebrew/bin/fish`). Use Fish syntax, not bash, for one-liners.
@@ -16,7 +26,7 @@ It matches this terminal setup: Fish + Ghostty + Starship + tmux + worktrees.
 - Never print, commit, or paste tokens. Secrets come from 1Password at runtime:
   `op run --env-file=.env -- <agent-cmd>` or `op-env .env -- <agent-cmd>` (Fish).
 - `.env` / `.envrc` with real values are never committed. `.env.example` documents keys.
-- Credential paths are denied in both agent baselines (`opencode/opencode.jsonc`, `claude/settings.shared.json`), but the allowlists cover `cat`/`head`/`tail` — so don't treat a deny list as the only control. If you need a secret, inject it for one command.
+- Credential paths are denied in the opencode, Claude, and codex baselines. They are **not** enforced by copilot (tested: `deniedTools` and `--deny-tool` did not block a local `.env` read in `-p` mode), and cline and crush have no baseline at all. Don't rely on a permission list as the only control — inject secrets per command.
 
 ## Workflow
 
