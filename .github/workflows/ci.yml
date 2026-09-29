@@ -73,8 +73,15 @@ jobs:
 
       - name: Brewfile parses
         run: |
-          brew bundle check --file=Brewfile --no-upgrade || true
-          brew bundle dump --file=Brewfile --no-upgrade >/dev/null
+          # `brew bundle check` exits 1 both for a malformed Brewfile and for
+          # unmet dependencies, and unmet is always true on a clean runner.
+          # Only a parse error should fail the build.
+          if brew bundle check --file=Brewfile --no-upgrade 2>&1 | grep -q 'Invalid Brewfile'; then
+            echo "Brewfile does not parse:" >&2
+            brew bundle check --file=Brewfile --no-upgrade 2>&1 | grep 'Invalid Brewfile' >&2
+            exit 1
+          fi
+          echo "Brewfile parses (unmet deps expected on a clean runner)"
 
       - name: no hardcoded clone location
         run: |
