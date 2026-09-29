@@ -43,11 +43,13 @@ jobs:
 
       - name: yaml parses
         run: |
-          # PyYAML is not in the runner's python3 by default.
-          pip3 install --quiet --disable-pip-version-check pyyaml
+          # The runner's python3 is externally managed (PEP 668) and has no
+          # PyYAML, so use a throwaway venv rather than touching the system.
+          python3 -m venv /tmp/ci-venv
+          /tmp/ci-venv/bin/pip install --quiet --disable-pip-version-check pyyaml
           for f in aider/aider.conf.yml; do
             echo "== $f"
-            python3 -c "import sys,yaml; yaml.safe_load(open(sys.argv[1])); print('OK')" "$f"
+            /tmp/ci-venv/bin/python -c "import sys,yaml; yaml.safe_load(open(sys.argv[1])); print('OK')" "$f"
           done
 
       - name: toml parses
