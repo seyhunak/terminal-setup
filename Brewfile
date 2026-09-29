@@ -21,5 +21,8 @@ brew "lazygit"
 brew "yazi"
 brew "uv"
 cask "ghostty"
-cask "font-jetbrains-mono-nerd-font"
 cask "1password-cli"
+# Nerd Font. Installed by the cask; if `brew bundle` cannot satisfy it (network
+# or cask unavailable), drop the JetBrainsMonoNerdFont-*.ttf files from
+# https://github.com/ryanoasis/nerd-fonts/releases into ~/Library/Fonts.
+cask "font-jetbrains-mono-nerd-font"

@@ -2,13 +2,28 @@
 status is-interactive; or return
 
 set -gx PATH /opt/homebrew/bin $PATH
-fish_add_path -g $HOME/.local/bin $HOME/dotfiles/scripts
+fish_add_path -g $HOME/.local/bin
 set -gx EDITOR nvim
 set -gx BAT_THEME "Catppuccin Mocha"
 set -gx FZF_DEFAULT_COMMAND 'fd --hidden --follow --exclude .git'
 set -gx EZA_ICONS_AUTO 1
 # Agentic env: prefer 1Password `op run` for secrets, never export tokens
 set -gx OPENCODE_AUTO_SHARE false
+
+# Repo root, resolved from this file's own (symlinked) location so the setup
+# works no matter where the repo is cloned. Falls back to ~/dotfiles.
+set -g __dotfiles_config (status filename)
+if command -q realpath
+    set -g __dotfiles_config (realpath $__dotfiles_config 2>/dev/null; or echo $__dotfiles_config)
+end
+set -g __dotfiles_dir (realpath (dirname $__dotfiles_config)/.. 2>/dev/null; or echo $HOME/dotfiles)
+set -e __dotfiles_config
+
+if test -d "$__dotfiles_dir/scripts"
+    fish_add_path -g $__dotfiles_dir/scripts
+else
+    echo "fish: dotfiles repo not found at $__dotfiles_dir (scripts not on PATH)" >&2
+end
 
 command -q starship; and starship init fish | source
 command -q zoxide; and zoxide init fish | source
@@ -40,6 +55,7 @@ abbr -a opr 'op run --'
 # agentic workflows
 abbr -a al 'agent-layout.sh'
 abbr -a wt 'git-worktree-add.sh'
+abbr -a an 'agent-new'
 
 set -g fish_greeting ""
 fish_vi_key_bindings

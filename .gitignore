@@ -1,4 +1,24 @@
+# macOS
 .DS_Store
+
+# Editor / OS noise
+*~
+*.swp
+.idea/
+.vscode/
+
+# Secrets — only .env.example is tracked
+.env
+.env.*
+!.env.example
+
+# Per-agent parallel worktrees (git-worktree-add.sh / agent-new)
+.worktrees/
+
+# Generated completions (written to ~/.config/fish/completions by install.sh)
+fish/completions/stellar.fish
+fish/completions/grok.fish
+
+# Local installer backups
 *.bak
 *.bak.*
-*~

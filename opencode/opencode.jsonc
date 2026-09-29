@@ -1,12 +1,16 @@
 {
   "$schema": "https://opencode.ai/config.json",
   // Shared agentic defaults. Secrets come from env (use `op run --env-file=.env -- opencode`).
-  // Docs: https://opencode.ai/docs/config
+  // Docs: https://opencode.ai/docs/permissions
+  // Rule order matters: the LAST matching pattern wins, so every catch-all "*"
+  // comes first and the specific allow/deny rules follow it.
   "theme": "catppuccin",
   "autoupdate": true,
   "permission": {
-    // Read-only shell is free; edits/deploys ask first.
+    // Read-only shell is free; anything else asks; credentials are blocked.
     "bash": {
+      "*": "ask",
+      // Read-only commands
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",
@@ -21,9 +25,62 @@
       "wc*": "allow",
       "echo*": "allow",
       "true": "allow",
-      "*": "ask"
+      // Irreversible / networked actions always ask, never auto-allow
+      "git commit*": "ask",
+      "git push*": "ask",
+      "git reset --hard*": "ask",
+      "brew install*": "ask",
+      // Credential material: denied, since the read-only allows above would
+      // otherwise expose ~/.ssh, ~/.aws, .env and friends without a prompt.
+      "cat *.env": "deny",
+      "cat .env": "deny",
+      "cat *.env.*": "deny",
+      "cat *.pem": "deny",
+      "cat *.key": "deny",
+      "cat *id_rsa*": "deny",
+      "cat *id_ed25519*": "deny",
+      "cat ~/.ssh/*": "deny",
+      "cat $HOME/.ssh/*": "deny",
+      "cat ~/.aws/*": "deny",
+      "cat $HOME/.aws/*": "deny",
+      "cat ~/.netrc": "deny",
+      "cat $HOME/.netrc": "deny",
+      "cat ~/.config/gh/hosts.yml": "deny",
+      "cat $HOME/.config/gh/hosts.yml": "deny",
+      "head *id_rsa*": "deny",
+      "head ~/.ssh/*": "deny",
+      "head $HOME/.ssh/*": "deny",
+      "tail *id_rsa*": "deny",
+      "tail ~/.ssh/*": "deny",
+      "tail $HOME/.ssh/*": "deny",
+      "op *": "deny",
+      "security *": "deny"
     },
-    "edit": "ask"
+    "edit": "ask",
+    "read": {
+      "*": "allow",
+      // .env files are denied by default upstream; keep that explicit and add
+      // the rest of the credential material.
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow",
+      "*.pem": "deny",
+      "*.key": "deny",
+      "*id_rsa*": "deny",
+      "*id_ed25519*": "deny",
+      "~/.ssh/*": "deny",
+      "~/.aws/*": "deny",
+      "~/.netrc": "deny",
+      "~/.config/gh/hosts.yml": "deny"
+    },
+    // Anything outside the repo needs an explicit opt-in, not a silent allow.
+    "external_directory": {
+      "*": "deny",
+      "~/.config/opencode/*": "allow",
+      "~/.claude/*": "allow"
+    },
+    "webfetch": "ask",
+    "websearch": "ask"
   },
   "mcp": {
     "filesystem": {

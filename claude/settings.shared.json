@@ -1,5 +1,5 @@
 {
-  "_comment": "Template — copy to ~/.claude/settings.json and adjust. Never commit tokens here. Live settings stay local; this is the shareable baseline.",
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Read",
@@ -14,8 +14,27 @@
       "Bash(rg:*)",
       "Bash(fd:*)"
     ],
-    "ask": ["Bash(*)", "Edit", "Write"],
-    "deny": []
+    "ask": [
+      "Bash(*)",
+      "Edit",
+      "Write"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.netrc)",
+      "Read(~/.config/gh/hosts.yml)",
+      "Bash(op:*)",
+      "Bash(security:*)"
+    ]
   },
   "enabledPlugins": {},
   "effortLevel": "medium"

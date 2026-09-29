@@ -23,7 +23,10 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$SESSION" -n "editor" -c "$PWD"
-tmux send-keys -t "$SESSION:editor" "nvim ." Enter
+# Only pre-fill the editor if nvim exists; otherwise leave a usable shell.
+if command -v nvim >/dev/null 2>&1; then
+  tmux send-keys -t "$SESSION:editor" "nvim ." Enter
+fi
 tmux new-window -t "$SESSION" -n "agent" -c "$PWD"
 tmux send-keys -t "$SESSION:agent" "$AGENT_CMD" Enter
 tmux new-window -t "$SESSION" -n "server" -c "$PWD"

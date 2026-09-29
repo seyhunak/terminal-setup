@@ -1,18 +1,33 @@
 #!/usr/bin/env bash
-# pre-commit — block accidental secret commits (ghp_/gho_/sk-/AKIA/aws secret).
+# pre-commit — block accidental secret commits.
 # Install per-repo: cp ~/dotfiles/git/hooks/pre-commit .git/hooks/pre-commit
+#
+# Scans the staged content (not the working tree) so it catches exactly what is
+# about to be committed. Uses `git grep --cached` so filenames with spaces work
+# and binary blobs are skipped instead of dumped.
 set -euo pipefail
 
 PATTERN='ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[bpas]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
 
-staged="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)"
-[[ -z "$staged" ]] && exit 0
+git diff --cached --quiet --exit-code 2>/dev/null && exit 0
 
-hits="$(echo "$staged" | xargs grep -nE "$PATTERN" 2>/dev/null || true)"
+# --cached: search the index. -I: skip binary files. Exit 1 = no match (fine),
+# >1 = real error, in which case fail open rather than block a legitimate commit.
+hits=""
+status=0
+hits="$(git grep --cached -I -nE "$PATTERN" -- . 2>/dev/null)" || status=$?
+if [[ $status -gt 1 ]]; then
+  echo "pre-commit: git grep failed (status $status); skipping scan" >&2
+  exit 0
+fi
+
 if [[ -n "$hits" ]]; then
-  echo "pre-commit: possible secret in staged files:" >&2
+  echo "pre-commit: possible secret in staged content:" >&2
   echo "$hits" >&2
-  echo "Remove it (use 1Password refs) or force with --no-verify if false positive." >&2
+  echo >&2
+  echo "Remove it (use 1Password refs via op run --env-file=.env) or" >&2
+  echo "bypass with --no-verify if this is a false positive." >&2
   exit 1
 fi
+
 exit 0

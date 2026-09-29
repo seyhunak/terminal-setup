@@ -1,0 +1,78 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck
+        run: |
+          brew install shellcheck
+          shellcheck install.sh scripts/*.sh git/hooks/pre-commit
+
+      - name: fish syntax
+        run: |
+          brew install fish
+          for f in fish/config.fish fish/conf.d/*.fish fish/functions/*.fish; do
+            echo "== $f"
+            fish --no-execute "$f"
+          done
+
+      - name: json parses
+        run: |
+          # Strip // comments and trailing commas (JSONC), then validate.
+          for f in opencode/opencode.jsonc claude/settings.shared.json; do
+            echo "== $f"
+            python3 - "$f" <<'PY'
+          import json, re, sys
+          src = open(sys.argv[1]).read()
+          src = re.sub(r'/\*.*?\*/', '', src, flags=re.S)
+          src = re.sub(r'^\s*//.*$', '', src, flags=re.M)
+          src = re.sub(r',(\s*[}\]])', r'\1', src)
+          json.loads(src)
+          print("OK")
+          PY
+          done
+
+      - name: Brewfile parses
+        run: |
+          brew bundle check --file=Brewfile --no-upgrade || true
+          brew bundle dump --file=Brewfile --no-upgrade >/dev/null
+
+      - name: no hardcoded clone location
+        run: |
+          # Everything must resolve the repo from its own location.
+          ! grep -rn 'HOME/dotfiles' install.sh scripts/ \
+            || (echo "hardcoded clone path in install.sh/scripts — use DOTFILES_DIR" && exit 1)
+
+  installer-dry-run:
+    name: installer dry run
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash syntax
+        run: bash -n install.sh
+      - name: installer runs to completion
+        # brew/stellar are not available on the runner, but the symlink and
+        # backup logic must still be exercised end to end.
+        run: |
+          export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+          ./install.sh
+      - name: symlinks resolve
+        run: |
+          for f in \
+            "$HOME/.config/ghostty/config" \
+            "$HOME/.tmux.conf" \
+            "$HOME/.config/opencode/opencode.jsonc" \
+            "$HOME/.config/fish/config.fish"; do
+            echo "== $f"
+            test -e "$f" || { echo "broken symlink: $f"; exit 1; }
+          done
+          git config --global --get-all include.path | grep -q "$GITHUB_WORKSPACE"

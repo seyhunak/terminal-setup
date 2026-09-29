@@ -1,23 +1,45 @@
 #!/usr/bin/env bash
 # dotfiles installer — macOS / Ghostty + Starship + Fish + agentic dev
 # Installs deps (brew bundle), backs up existing configs, symlinks repo into ~/.config/
+#
+# Idempotent and location-independent: the repo can live anywhere, and re-running
+# this script repairs symlinks that point at a previous clone location.
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 BACKUP_SUFFIX=".bak.$(date +%Y%m%d-%H%M%S)"
 
 link_file() {
   local src="$1" dest="$2"
   mkdir -p "$(dirname "$dest")"
-  if [[ -e "$dest" && ! -L "$dest" ]]; then
+  if [[ -L "$dest" ]]; then
+    # Symlink: drop it if it already points at the right place, else replace.
+    if [[ "$(readlink "$dest")" == "$src" ]]; then
+      echo "ok:    $dest"
+      return
+    fi
+    rm "$dest"
+  elif [[ -e "$dest" ]]; then
     echo "backup: $dest -> ${dest}${BACKUP_SUFFIX}"
     mv "$dest" "${dest}${BACKUP_SUFFIX}"
-  elif [[ -L "$dest" ]]; then
-    rm "$dest"
   fi
-  ln -sf "$src" "$dest"
-  echo "link: $dest -> $src"
+  ln -s "$src" "$dest"
+  echo "link:  $dest -> $src"
 }
+
+repair_stale_symlinks() {
+  # Any of our symlink targets that no longer resolve is a leftover from a
+  # moved/renamed clone. Remove it so link_file can recreate it.
+  local dest
+  for dest in "$@"; do
+    if [[ -L "$dest" && ! -e "$dest" ]]; then
+      echo "stale: $dest -> $(readlink "$dest")"
+      rm "$dest"
+    fi
+  done
+}
+
+echo "==> dotfiles at $DOTFILES_DIR"
 
 if command -v brew >/dev/null 2>&1; then
   echo "==> brew bundle"
@@ -26,26 +48,44 @@ else
   echo "brew not found — skipping Brewfile (install https://brew.sh first)"
 fi
 
-link_file "$DOTFILES_DIR/ghostty/config" "$HOME/.config/ghostty/config"
-# Starship is managed by stellar (https://stellar.a3chron.dev), not symlinked.
-# Old hand-rolled config kept as starship/starship.toml (also backed up as seyhunakyurek/backup@1.0).
-link_file "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
-link_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
+GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
+TMUX_CONFIG="$HOME/.tmux.conf"
+OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
+FISH_DIR="$HOME/.config/fish"
 
-mkdir -p "$HOME/.config/fish"
+repair_stale_symlinks \
+  "$GHOSTTY_CONFIG" \
+  "$TMUX_CONFIG" \
+  "$OPENCODE_CONFIG" \
+  "$FISH_DIR/config.fish" \
+  "$FISH_DIR/conf.d" \
+  "$FISH_DIR/functions" \
+  "$FISH_DIR/completions"
+
+link_file "$DOTFILES_DIR/ghostty/config" "$GHOSTTY_CONFIG"
+# Starship is managed by stellar (https://stellar.a3chron.dev), not symlinked.
+# The old hand-rolled config is kept for reference only, at starship/starship.toml.
+link_file "$DOTFILES_DIR/tmux/tmux.conf" "$TMUX_CONFIG"
+link_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$OPENCODE_CONFIG"
+
+# fish/: link the entry points individually so unrelated files (backups, local
+# snippets) in ~/.config/fish survive a re-run.
+mkdir -p "$FISH_DIR"
 for entry in config.fish conf.d functions completions; do
   if [[ -e "$DOTFILES_DIR/fish/$entry" ]]; then
-    link_file "$DOTFILES_DIR/fish/$entry" "$HOME/.config/fish/$entry"
+    link_file "$DOTFILES_DIR/fish/$entry" "$FISH_DIR/$entry"
   fi
 done
 
-chmod +x "$DOTFILES_DIR/scripts/"*.sh
-fish_add_path="$HOME/dotfiles/scripts"
-echo "ensure ~/dotfiles/scripts is on PATH (fish config already adds it)"
+chmod +x "$DOTFILES_DIR/scripts/"*.sh "$DOTFILES_DIR/git/hooks/pre-commit"
 
 if command -v git >/dev/null 2>&1; then
-  git config --global include.path "$DOTFILES_DIR/git/gitconfig.extra" 2>/dev/null || true
-  echo "git include.path -> $DOTFILES_DIR/git/gitconfig.extra"
+  # Replace, don't append: re-running the installer would otherwise stack up
+  # duplicate include.path entries.
+  git config --global --replace-all include.path "$DOTFILES_DIR/git/gitconfig.extra"
+  if [[ -r "$DOTFILES_DIR/git/gitconfig.extra" ]]; then
+    echo "git include.path -> $DOTFILES_DIR/git/gitconfig.extra"
+  fi
 fi
 
 # stellar (starship theme manager) + ctp-blue theme
@@ -56,11 +96,18 @@ if ! command -v stellar >/dev/null 2>&1; then
 fi
 export PATH="$HOME/.local/bin:$PATH"
 stellar apply a3chron/ctp-blue
-stellar completion fish >"$DOTFILES_DIR/fish/completions/stellar.fish"
+# Write generated completions to the live fish dir, not the repo, so installs
+# never leave the working tree dirty.
+stellar completion fish >"$FISH_DIR/completions/stellar.fish" 2>/dev/null ||
+  echo "warning: could not write stellar completions"
 echo "stellar theme -> $(stellar current 2>/dev/null | head -n 5 | tr '\n' ' ')"
 
-echo "done. Notes:"
-echo "- Secrets: use 1Password refs (.env.example). Never commit .env."
-echo "- Claude settings: copy claude/settings.shared.json -> ~/.claude/settings.json if wanted (live hooks kept by default)."
-echo "- Per-repo secret hook: cp git/hooks/pre-commit .git/hooks/pre-commit"
-echo "Reload Ghostty (Cmd+Shift+,) and open a new tab."
+cat <<EOF
+
+done. Notes:
+- Secrets: use 1Password refs (.env.example). Never commit .env.
+- Claude settings: copy claude/settings.shared.json -> ~/.claude/settings.json if wanted.
+- Per-repo secret hook: cp $DOTFILES_DIR/git/hooks/pre-commit .git/hooks/pre-commit
+- Parallel agents: .worktrees/<name> via 'agent-new <name>' (git-ignored, one agent per branch).
+Reload Ghostty (Cmd+Shift+,) and open a new tab.
+EOF

@@ -7,15 +7,17 @@ function agent-new --description 'New agent worktree + tmux window'
         return 1
     end
     set -l name $argv[1]
-    set -l base main
+    # Base-branch resolution (origin/<base> then HEAD) lives in the script; only
+    # pass a base through when the caller actually gave one.
+    set -l wt_args $name
     if test (count $argv) -ge 2
-        set base $argv[2]
+        set -a wt_args $argv[2]
     end
     if not command -q git-worktree-add.sh
-        echo "agent-new: git-worktree-add.sh not on PATH (add ~/dotfiles/scripts)" >&2
+        echo "agent-new: git-worktree-add.sh not on PATH (run ./install.sh)" >&2
         return 1
     end
-    set -l wt_path (git-worktree-add.sh $name $base)
+    set -l wt_path (git-worktree-add.sh $wt_args)
     or return 1
     echo "worktree: $wt_path"
     if test -n "$TMUX"
