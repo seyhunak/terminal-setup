@@ -28,7 +28,7 @@ link_file() {
 }
 
 repair_stale_symlinks() {
-  # Any of our symlink targets that no longer resolve is a leftover from a
+  # Any of our symlink targets that no longer resolves is a leftover from a
   # moved/renamed clone. Remove it so link_file can recreate it.
   local dest
   for dest in "$@"; do
@@ -37,6 +37,72 @@ repair_stale_symlinks() {
       rm "$dest"
     fi
   done
+}
+
+# The user's ~/.zshrc is theirs: it carries tool installers and PATH entries we
+# know nothing about. So instead of symlinking over it, splice a marked block in
+# at the end. Re-running replaces the block in place, never stacks copies.
+MARKER_BEGIN="# >>> dotfiles fish handoff >>>"
+MARKER_END="# <<< dotfiles fish handoff <<<"
+
+splice_fish_handoff() {
+  local src="$1" dest="$2" tmp
+  [[ -r "$src" ]] || {
+    echo "skip: fish handoff (no $src)"
+    return 0
+  }
+  tmp="$(mktemp)"
+  if [[ -e "$dest" ]]; then
+    # Drop any previously installed block (markers included), then trim the
+    # blank lines it leaves behind so re-runs are byte-stable.
+    awk -v b="$MARKER_BEGIN" -v e="$MARKER_END" '
+      $0 == b { skip = 1; next }
+      $0 == e { skip = 0; next }
+      skip { next }
+      { buf[++n] = $0 }
+      END {
+        while (n > 0 && buf[n] ~ /^[[:space:]]*$/) n--
+        for (i = 1; i <= n; i++) print buf[i]
+      }
+    ' "$dest" >"$tmp"
+  fi
+  {
+    # The user's own lines first, then the handoff block last: the block execs
+    # fish, so anything after it would be unreachable.
+    [[ -s "$tmp" ]] && cat "$tmp"
+    printf '%s\n' "$MARKER_BEGIN"
+    cat "$src"
+    printf '%s\n' "$MARKER_END"
+  } >"$tmp.new"
+
+  if [[ -e "$dest" ]] && cmp -s "$tmp.new" "$dest"; then
+    echo "ok:    $dest (fish handoff)"
+  else
+    [[ -e "$dest" ]] && {
+      echo "backup: $dest -> ${dest}${BACKUP_SUFFIX}"
+      cp -p "$dest" "${dest}${BACKUP_SUFFIX}"
+    }
+    mv "$tmp.new" "$dest"
+    echo "patch: $dest (+ fish handoff: exec fish)"
+  fi
+  rm -f "$tmp" "$tmp.new"
+}
+
+# fish is absent from /etc/shells on a stock macOS, so `chsh -s fish` is refused
+# until it is listed there. Report the gap instead of guessing; changing the
+# login shell needs a password, so the user runs it.
+report_login_shell() {
+  local fish_bin="/opt/homebrew/bin/fish" current
+  current="$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}')"
+  [[ -n "$current" ]] || return 0
+  if [[ "$current" == "$fish_bin" ]]; then
+    echo "login shell: $current"
+    return 0
+  fi
+  echo "login shell: $current (not fish — Ghostty/tmux override it, other apps won't)"
+  grep -qxF "$fish_bin" /etc/shells 2>/dev/null ||
+    echo "  missing from /etc/shells: sudo sh -c 'echo $fish_bin >> /etc/shells'"
+  echo "  to make fish the default everywhere: chsh -s $fish_bin"
 }
 
 echo "==> dotfiles at $DOTFILES_DIR"
@@ -56,6 +122,7 @@ OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 CODEX_PROFILE="$HOME/.codex/dotfiles.config.toml"
 AIDER_CONFIG="$HOME/.aider.conf.yml"
 FISH_DIR="$HOME/.config/fish"
+ZSHRC="$HOME/.zshrc"
 
 repair_stale_symlinks \
   "$GHOSTTY_CONFIG" \
@@ -75,6 +142,12 @@ link_file "$DOTFILES_DIR/tmux/tmux.conf" "$TMUX_CONFIG"
 link_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$OPENCODE_CONFIG"
 link_file "$DOTFILES_DIR/codex/dotfiles.config.toml" "$CODEX_PROFILE"
 link_file "$DOTFILES_DIR/aider/aider.conf.yml" "$AIDER_CONFIG"
+
+# zsh: the macOS login shell is often still /bin/zsh, and anything that does not
+# go through Ghostty (Terminal.app, VS Code, ssh, a hand-typed `zsh`) starts
+# there — without the fish abbrs. Hand off to fish from ~/.zshrc instead of
+# taking that file over.
+splice_fish_handoff "$DOTFILES_DIR/zsh/zshrc-fish-handoff.zsh" "$ZSHRC"
 
 # fish/: link the entry points individually so unrelated files (backups, local
 # snippets) in ~/.config/fish survive a re-run.
@@ -110,16 +183,21 @@ stellar completion fish >"$FISH_DIR/completions/stellar.fish" 2>/dev/null ||
   echo "warning: could not write stellar completions"
 echo "stellar theme -> $(stellar current 2>/dev/null | head -n 5 | tr '\n' ' ')"
 
+report_login_shell
+
 cat <<EOF
 
 done. Notes:
 - Secrets: use 1Password refs (.env.example). Never commit .env.
 - Linked automatically: ghostty, tmux, opencode, fish, and the agent baselines
   codex/dotfiles.config.toml + aider/aider.conf.yml.
+- Patched in place (backed up): ~/.zshrc gets a marked block that hands
+  interactive zsh over to fish, so oc/cc/cx/al/an exist in every terminal.
+  Delete the block to opt out, or one-shot with DOTFILES_FISH_HANDOFF=off zsh.
 - Merge-only templates (not symlinked, so your live settings survive):
       claude/settings.shared.json -> ~/.claude/settings.json
       copilot/settings.shared.json -> ~/.copilot/settings.json
 - Per-repo secret hook: cp $DOTFILES_DIR/git/hooks/pre-commit .git/hooks/pre-commit
 - Parallel agents: .worktrees/<name> via 'agent-new <name>' (git-ignored, one agent per branch).
-Reload Ghostty (Cmd+Shift+,) and open a new tab.
+Open a new terminal (or run 'exec fish'); the current zsh session keeps its old config.
 EOF
