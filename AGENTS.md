@@ -20,6 +20,7 @@ that sets `sandbox_mode = "workspace-write"` and `approval_policy = "on-request"
 - Persistent work happens in tmux session `agent` (`agent-layout.sh` / `al`): `editor` / `agent` / `server` windows.
 - Parallel agents use isolated worktrees: `git-worktree-add.sh <name> [base]` → `.worktrees/<name>`. Never two agents on one branch. Worktrees are excluded via `.git/info/exclude`, not the repo's `.gitignore`.
 - Tool versions via mise/asdf + direnv (`.envrc` + `.tool-versions`). Respect them; don't `brew install` a different major.
+- The login shell may still be `/bin/zsh`; `zsh/zshrc-fish-handoff.zsh` execs fish for interactive shells so the abbrs (`oc`/`cc`/`cx`/`al`/`an`) always resolve. Escape hatches: `DOTFILES_FISH_HANDOFF=off zsh`, or delete the marked block from `~/.zshrc`. Fish `abbr`s are prompt-level text expansion, so `fish -c 'oc'` and scripts must call `opencode` directly.
 
 ## Secrets
 
