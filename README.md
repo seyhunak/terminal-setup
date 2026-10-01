@@ -122,18 +122,71 @@ Reload Ghostty with `Cmd+Shift+,` and open a new tab — or just `exec fish`.
 
 ## Agentic workflow
 
+### The four commands
+
+| abbr | runs | what it does |
+|------|------|--------------|
+| `al` | `agent-layout.sh` | tmux session `agent` with windows `editor` / `agent` / `server` |
+| `wt` | `git-worktree-add.sh` | isolated worktree on a new branch, prints the path on stdout |
+| `an` | `agent-new` | `wt` plus a tmux window opened in that worktree |
+| `opr` / `op-env` | — | run any command with secrets injected from 1Password |
+
 ```fish
-al                                  # tmux session `agent`: editor / agent / server
-agent-layout.sh myproj claude        # custom session + agent command
-an my-feature                       # .worktrees/my-feature + tmux window (parallel-safe)
-wt my-feature origin/main            # same, explicit base branch
-op-env .env -- opencode              # secrets from 1Password, never exported
+al                               # tmux session `agent`: editor / agent / server
+al myproj claude                # custom session + agent command
+an my-feature                   # .worktrees/my-feature + tmux window (parallel-safe)
+wt my-feature                   # same, explicit base defaults to main
+wt my-feature origin/main       # explicit base branch
+opr -- opencode                 # whole 1Password session
+op-env .env -- claude           # scoped to an env file of op:// refs
 ```
 
-- One agent per worktree/branch — never two agents on one branch.
-- Worktrees live in `.worktrees/` and are added to `.git/info/exclude` on creation, so they never show up in the parent repo's `git status` without touching its tracked `.gitignore`.
-- `mise` / `direnv` / `docker` no longer shown inline (not in upstream `ctp-blue`; re-add via local stellar overlay if wanted).
-- Diffs via `delta`; secret-looking commits blocked by the `pre-commit` hook (`cp git/hooks/pre-commit .git/hooks/pre-commit` per repo).
+`al` is safe to re-run: it attaches if the session exists instead of erroring, and uses `switch-client` rather than `attach` when already inside tmux. The `editor` window only pre-fills `nvim .` when nvim is installed. Bound in Ghostty to `Cmd+Shift+A`.
+
+`wt` enforces the mechanics of one-agent-per-branch: it rejects names containing `..` or unexpected characters, refuses if the branch or directory already exists, and resolves the base through `origin/<base>` before falling back to `HEAD` with a warning. `an` outside tmux prints `cd <path>` rather than failing.
+
+`opr` and `op-env` are the ones that matter for safety: secrets exist only for that single command and are never exported into your shell. `.env` holds `op://` references, never real values — set it up with `op inject -i .env.example -o .env`.
+
+### Agent shortcuts
+
+```fish
+oc / ocr    opencode, opencode --continue
+cc / ccr    claude, claude --continue
+cx / cxr    codex -p dotfiles, codex -p dotfiles resume --last
+co          copilot
+cn          cline      ad aider      gem gemini      cr crush
+```
+
+Safe by default — no `--yolo`, no `--dangerously-bypass-approvals`. `cx` selects the `dotfiles` profile (`sandbox_mode = "workspace-write"`, `approval_policy = "on-request"`) layered on top of your own `~/.codex/config.toml`. Each shortcut registers only if its binary exists, so a clone on a machine without aider doesn't collect dead abbrs.
+
+Because these are fish **abbrs**, they expand at the prompt only. `fish -c 'oc'` and any script must call `opencode` directly.
+
+### Secret hygiene
+
+Install the guard once per repo:
+
+```fish
+cp ~/Projects/dotfiles/git/hooks/pre-commit .git/hooks/pre-commit
+```
+
+It scans **staged** content rather than the working tree, so it catches exactly what is about to be committed. `git grep --cached` means filenames with spaces work and binary blobs are skipped. Patterns: `ghp_`/`gho_`/`github_pat_`, `sk-`, `AKIA`, Slack tokens, private-key headers. It fails *open* if `git grep` itself errors, so a malfunction can't block legitimate commits.
+
+Treat it as a guardrail, not the control. Per the copilot test above, `deniedTools` and `--deny-tool` did **not** block a local `.env` read in `-p` mode. The reliable control for every tool is injecting secrets per command with `op run`.
+
+### A typical loop
+
+```fish
+al                               # editor / agent / server
+# in the agent window:
+oc                              # start opencode
+an fix-auth-bug                # parallel agent, own branch + own tmux window
+wt spike-another-thing         # just the worktree
+opr -- opencode                # if the run needs a token
+```
+
+- Worktrees live in `.worktrees/` and are added to `.git/info/exclude` on creation, so they never appear in the parent repo's `git status` without touching its tracked `.gitignore`.
+- `mise` / `direnv` / `docker` are no longer shown inline (not in upstream `ctp-blue`; re-add via a local stellar overlay if wanted).
+- Diffs via `delta`; secret-looking commits blocked by the `pre-commit` hook above.
 
 ## Key bits
 
