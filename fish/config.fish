@@ -25,6 +25,14 @@ else
     echo "fish: dotfiles repo not found at $__dotfiles_dir (scripts not on PATH)" >&2
 end
 
+# Autosuggestions (ghost text, right-arrow to accept) and syntax highlighting are
+# built into fish >= 4.0 — no plugin needed. Tuned here instead:
+#   fish_color_autosuggestion  the ghost text colour
+#   fish_color_valid_path      an argument that exists on disk
+# Theme the pair to Catppuccin Mocha so they match starship + Ghostty.
+set -g fish_color_autosuggestion "#6c7086"  # overlay0, dimmed
+set -g fish_color_valid_path "#a6e3a1"     # green
+
 command -q starship; and starship init fish | source
 command -q zoxide; and zoxide init fish | source
 command -q fzf; and fzf --fish | source
@@ -42,6 +50,10 @@ abbr -a gp 'git push'
 abbr -a v nvim
 abbr -a y yazi
 abbr -a z zoxide
+abbr -a proc htop
+# thefuck has no fish integration (3.32 only emits bash/zsh/tcsh glue), so `tf` is
+# a plain call: `tf <wrong command>` prints the corrected line. No key binding.
+abbr -a tf thefuck
 # Agent CLIs. abbr_if registers the shortcut only when the binary exists, so a
 # clone on a machine without e.g. aider doesn't collect dead abbrs.
 # Safe defaults throughout: no --yolo, no --dangerously-bypass-approvals.
@@ -74,3 +86,8 @@ abbr -a an 'agent-new'
 
 set -g fish_greeting ""
 fish_vi_key_bindings
+
+# atuin replaces fish's own history and owns the ctrl-r binding, so it has to be
+# initialised after fish_vi_key_bindings or vi keys overwrite it. Env lives in
+# conf.d/atuin.fish. Sync is opt-in: `atuin register`.
+command -q atuin; and atuin init fish | source
