@@ -1,0 +1,46 @@
+# herdr config — agent-aware terminal multiplexer.
+# Installed with: curl -fsSL https://herdr.dev/install.sh | sh   (into ~/.local/bin)
+# Deliberately NOT in the Brewfile: ~/.local/bin precedes /opt/homebrew/bin on
+# PATH, so a brew copy would be shadowed and emit a warning on every brew call.
+# Update with `herdr update`; apply edits to a running server with
+# `herdr server reload-config`. Print the full defaults with `herdr --default-config`.
+#
+# Symlinked to ~/.config/herdr/config.toml by install.sh. A pre-existing file is
+# backed up rather than replaced. Merge-only extras you want to keep go in a
+# local file; this one is the tracked baseline.
+
+# Onboarding is a one-time flow, so it is off after the first run.
+onboarding = false
+
+[theme]
+# Matches the rest of this setup: Ghostty uses Catppuccin Latte/Mocha and
+# tmux uses the Latte status bar.
+name = "rose-pine"
+auto_switch = false
+
+[terminal]
+# New panes should be the same fish that Ghostty and tmux already launch, not
+# whatever $SHELL the launchd agent inherited (/bin/zsh on this machine).
+default_shell = "/opt/homebrew/bin/fish"
+shell_mode = "login"
+
+[update]
+channel = "stable"
+version_check = true
+
+[keys]
+prefix = "ctrl+b"
+# lazygit in a popup, the same muscle memory as Ghostty's Cmd+G. Pane apps
+# still receive the mouse because this is a popup rather than a split.
+[[keys.command]]
+key = "prefix+alt+g"
+type = "popup"
+command = "lazygit"
+width = "80%"
+height = "80%"
+
+[ui.toast]
+# Toast when an agent in a background workspace needs attention — the whole
+# point of the sidebar, without it you go pane by pane hunting for whoever is
+# blocked.
+delivery = "herdr"

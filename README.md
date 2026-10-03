@@ -8,6 +8,7 @@
 ![Nerd Font](https://img.shields.io/badge/font-JetBrainsMono_Nerd-8839EF?style=flat-square&logo=typography&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-40A02B?style=flat-square)
 ![tmux](https://img.shields.io/badge/sessions-tmux-40A02B?style=flat-square&logo=tmux&logoColor=white)
+![herdr](https://img.shields.io/badge/agents-herdr-8B5CF6?style=flat-square&logo=tmux&logoColor=white)
 ![1Password](https://img.shields.io/badge/secrets-1Password-0094F5?style=flat-square&logo=1password&logoColor=white)
 
 **Autonomous agent duo** — `Cmd+Shift+S` opens one window split three ways; the leader takes your input and dispatches to the worker, with lazygit under it:
@@ -74,9 +75,10 @@ Every shortcut is registered **only when its binary exists**, so a fresh clone o
 | `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups, `Cmd+Shift+A` agent layout, `Cmd+Shift+S` leader/worker duo |
 | `starship/starship.toml` | archived, see [starship/README.md](starship/README.md) | old hand-rolled prompt, kept for reference only — nothing links or reads it |
 | `stellar` | `~/.config/starship.toml` -> `~/.config/stellar/a3chron/ctp-blue/1.1.toml` | `stellar apply a3chron/ctp-blue`, completions generated into `~/.config/fish/completions/` |
-| `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf/atuin init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `tf`, `proc`, `op-env`, `agent-new`, `agent-duo`, vi bindings |
+| `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf/atuin init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `tf`, `proc`, `op-env`, `agent-new`, `agent-duo`, herdr abbrs + completions, vi bindings |
 | `zsh/zshrc-fish-handoff.zsh` | spliced into `~/.zshrc` between markers | hands interactive zsh to fish, so the agent abbrs work outside Ghostty too. Never symlinks over your `.zshrc`; delete the block to opt out, or `DOTFILES_FISH_HANDOFF=off zsh` one-shot |
 | `tmux/tmux.conf` | `~/.tmux.conf` | Truecolor for Ghostty, vi copy, 100k history, Catppuccin Latte status |
+| `herdr/` | `~/.config/herdr/config.toml` | agent-aware multiplexer: Catppuccin theme, fish for new panes, `prefix+alt+g` lazygit popup, toasts when a background agent needs attention. Only linked when `herdr` is installed. See [herdr/README.md](herdr/README.md) |
 | `scripts/` | on PATH via fish | `agent-layout.sh` (editor/agent/server tmux session), `agent-duo.sh` + `agent-send.sh` (leader/worker duo), `git-worktree-add.sh` (isolated worktree per agent) |
 | `agents/leader-brief.md` | pasted into the leader pane by `duo` | the leader's operating instructions: dispatch protocol, one task at a time, verify before reporting done |
 | `opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` | Read-only shell allowlist, deny rules for credential paths, filesystem + GitHub (opt-in) MCP, secrets from env |
@@ -91,7 +93,7 @@ Every shortcut is registered **only when its binary exists**, so a fresh clone o
 
 ## Requirements
 
-macOS with Homebrew. `./install.sh` runs `brew bundle` from `Brewfile` (fish, starship, tmux, nvim, git, delta, direnv, mise, asdf, eza, zoxide, fzf, lazygit, yazi, Ghostty, JetBrainsMono Nerd, 1Password CLI, …) plus the stellar installer (`~/.local/bin/stellar`) and applies `a3chron/ctp-blue`.
+macOS with Homebrew. `./install.sh` runs `brew bundle` from `Brewfile` (fish, starship, tmux, nvim, git, delta, direnv, mise, asdf, eza, zoxide, fzf, lazygit, yazi, Ghostty, JetBrainsMono Nerd, 1Password CLI, …) plus the stellar installer (`~/.local/bin/stellar`) and applies `a3chron/ctp-blue`. [herdr](https://herdr.dev/) is the one exception: it is not in the `Brewfile` and installs itself with `curl -fsSL https://herdr.dev/install.sh | sh` — see [herdr/README.md](herdr/README.md).
 
 ### Tools
 
@@ -109,6 +111,7 @@ macOS with Homebrew. `./install.sh` runs `brew bundle` from `Brewfile` (fish, st
 | `uv` | pip, astral-fast | `fish/conf.d/uv.env.fish` |
 | `thefuck` | corrects a wrong command | `abbr tf` — **no fish integration**: thefuck 3.32 only generates bash/zsh glue, so `tf <cmd>` prints the fix and no key binding is wired |
 | `htop` | process viewer | `abbr proc` (`sudo htop` for all processes) |
+| `herdr` | agent-aware multiplexer | curl install into `~/.local/bin`, **not** the Brewfile (it would be shadowed). `abbr hd` / `hst` / `hal` / `hwl`, config via `herdr/config.toml` — see [herdr/README.md](herdr/README.md) |
 
 `atuin` sync is opt-in and never configured here — run `atuin register` yourself and keep the token in 1Password, not in this repo.
 
@@ -215,6 +218,29 @@ Safe by default — no `--yolo`, no `--dangerously-bypass-approvals`. `cx` selec
 
 Because these are fish **abbrs**, they expand at the prompt only. `fish -c 'oc'` and any script must call `opencode` directly.
 
+### herdr — the agent-aware multiplexer
+
+Two multiplexers live here on purpose, as alternatives rather than layers. **tmux** (`al`, `duo`) is dumb and predictable: panes, windows, no opinion about what runs in them. **herdr** (`hd`) is a second multiplexer that reads every pane and tells you which agent is `working`, which is `blocked` waiting on you, and which is `done` — so you stop hunting pane by pane for whoever needs an answer.
+
+```fish
+hd                              # launch or attach to the persistent session
+hst                             # herdr status
+hal                             # herdr agent list — every agent and its state
+hwl                             # herdr worktree list
+```
+
+```sh
+herdr worktree create --branch fix-auth --base main
+herdr server reload-config      # apply config edits to the running server
+herdr --default-config          # the full default config
+```
+
+It is installed by its own installer into `~/.local/bin`, **not** the Brewfile: `~/.local/bin` precedes `/opt/homebrew/bin`, so a Homebrew copy is shadowed and warns on every `brew` call. A CI check keeps it out.
+
+`herdr/config.toml` is symlinked to `~/.config/herdr/config.toml` (existing file backed up, and only linked when `herdr` is present). It sets the Catppuccin theme to match Ghostty and tmux, makes new panes run fish instead of the launchd agent's `/bin/zsh`, binds `prefix+alt+g` to a lazygit popup like Ghostty's `Cmd+G`, and turns on toasts for background agents needing attention. Completions are generated from the binary into `~/.config/fish/completions/`.
+
+Two caveats. `herdr worktree remove` leaves the **git branch behind** — `git branch -d <name>` afterwards. And **cline has no lifecycle integration**, so its `working`/`blocked`/`done` state comes from screen detection and is less reliable than for the integrated agents (`claude`, `codex`, `opencode` are installed). Don't nest the two multiplexers; pick one per terminal.
+
 ### Secret hygiene
 
 Install the guard once per repo:
@@ -249,7 +275,8 @@ opr -- opencode                # if the run needs a token
 
 - **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Cmd+Shift+A` agent tmux layout, `Cmd+Shift+S` leader/worker duo, `Ctrl+`` Quake terminal
 - **Starship (stellar `a3chron/ctp-blue@1.1`, `catppuccin_mocha`):** 3-line box — shell/nix/memory + node/python/go/ocaml → user/host/dir/git/cmd-duration → battery + `──╌╌`. Old powerline config archived; `mise`/`direnv`/`docker` segments not in upstream theme.
-- **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, `opr` 1Password runner, `al`/`wt`/`an` agentic workflows, greeting off, `fish_vi_key_bindings`
+- **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, `opr` 1Password runner, `al`/`wt`/`an` agentic workflows, `duo`/`ax` leader/worker duo, `hd`/`hst`/`hal`/`hwl` herdr, greeting off, `fish_vi_key_bindings`
+- **herdr:** `hd` attach, `prefix+?` every binding, `prefix+alt+g` lazygit popup. Alternative to tmux, not a layer over it — pick one per terminal
 - **Secrets:** `.env` is git-ignored (only `.env.example` is tracked), and both agent baselines that support it deny `read`/`cat`/`head`/`tail` on `.env`, `*.pem`, `*.key`, `id_rsa*`, `~/.ssh/`, `~/.aws/`, `~/.netrc` and `~/.config/gh/hosts.yml`. opencode's `external_directory` denies by default. copilot and cline are the exceptions — see the Agents table.
 
 ## CI

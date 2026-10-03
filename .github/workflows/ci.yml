@@ -54,10 +54,22 @@ jobs:
 
       - name: toml parses
         run: |
-          for f in codex/dotfiles.config.toml starship/starship.toml; do
+          for f in codex/dotfiles.config.toml starship/starship.toml herdr/config.toml; do
             echo "== $f"
             python3 -c "import sys,tomllib; tomllib.load(open(sys.argv[1],'rb')); print('OK')" "$f"
           done
+
+      - name: herdr baseline stays honest
+        run: |
+          # herdr is installed by its own installer, NOT the Brewfile: ~/.local/bin
+          # precedes /opt/homebrew/bin, so a brew copy is shadowed and warns on
+          # every brew call. Keep it out of the Brewfile.
+          if grep -qE '^\s*(brew|cask) "herdr"' Brewfile; then
+            echo "herdr must not be in the Brewfile — ~/.local/bin shadows it (see herdr/README.md)" >&2
+            exit 1
+          fi
+          # Panes should get fish, not the launchd agent's /bin/zsh.
+          grep -q 'default_shell = "/opt/homebrew/bin/fish"' herdr/config.toml
 
       - name: codex baseline stays inside the sandbox
         run: |

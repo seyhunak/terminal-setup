@@ -17,7 +17,8 @@ that sets `sandbox_mode = "workspace-write"` and `approval_policy = "on-request"
 
 - Shell is Fish (`/opt/homebrew/bin/fish`). Use Fish syntax, not bash, for one-liners.
 - Terminal is Ghostty; prompt is Starship via stellar, theme `a3chron/ctp-blue` (catppuccin_mocha). See `starship/README.md`.
-- Persistent work happens in tmux session `agent` (`agent-layout.sh` / `al`): `editor` / `agent` / `server` windows.
+- tmux session `agent` (`agent-layout.sh` / `al`): `editor` / `agent` / `server` windows.
+- **herdr** (`hd`) is a second, agent-aware multiplexer: it reads each pane and reports `working` / `blocked` / `done`. Alternatives to tmux, not layers — pick one per terminal, never nest them. Installed by its own installer into `~/.local/bin`, deliberately not the Brewfile (see `herdr/README.md`).
 - The leader/worker duo is tmux session `duo` (`agent-duo` / `duo`, Ghostty `Cmd+Shift+S`): left = leader, top right = worker, bottom right = lazygit. The leader takes your input and dispatches to the worker with `agent-send.sh` (`ax`); panes are keyed by the tmux user option `@agent_role`, because fish's title integration overwrites `pane_title`. Both agents launch as `cline -i --auto-approve false` — `-i` is mandatory (bare `cline` is one-shot) and auto-approve is off by default on purpose.
 - Parallel agents use isolated worktrees: `git-worktree-add.sh <name> [base]` → `.worktrees/<name>`. Never two agents on one branch. Worktrees are excluded via `.git/info/exclude`, not the repo's `.gitignore`.
 - Tool versions via mise/asdf + direnv (`.envrc` + `.tool-versions`). Respect them; don't `brew install` a different major.

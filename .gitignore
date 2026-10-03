@@ -23,6 +23,7 @@
 # Generated completions (written to ~/.config/fish/completions by install.sh)
 fish/completions/stellar.fish
 fish/completions/grok.fish
+fish/completions/herdr.fish
 
 # Local installer backups
 *.bak

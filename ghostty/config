@@ -98,3 +98,12 @@ keybind = cmd+shift+comma=reload_config
 
 # --- Performance ---
 scrollback-limit = 100000
+
+# >>> herdr-radar font block
+# Written by herdr's own installer (font for its sidebar agent icons). It edits
+# the live Ghostty config, which is symlinked to this repo, so it shows up here
+# after running herdr's setup. Additive: maps codepoints to the icon font so the
+# herdr sidebar renders agent states. Reload Ghostty (Cmd+Shift+,) to apply.
+font-codepoint-map = U+E1A0-U+E1BA=Herdr Agent Icons Max
+font-codepoint-map = U+E1C0-U+E1C5=Herdr Agent Icons Max
+# <<< herdr-radar font block

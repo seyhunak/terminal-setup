@@ -116,6 +116,7 @@ fi
 
 GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
 TMUX_CONFIG="$HOME/.tmux.conf"
+HERDR_CONFIG="$HOME/.config/herdr/config.toml"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.jsonc"
 # codex: a profile layer, so ~/.codex/config.toml (model, marketplaces, plugins,
 # per-project trust) is left alone. Selected by `cx` -> codex -p dotfiles.
@@ -127,6 +128,7 @@ ZSHRC="$HOME/.zshrc"
 repair_stale_symlinks \
   "$GHOSTTY_CONFIG" \
   "$TMUX_CONFIG" \
+  "$HERDR_CONFIG" \
   "$OPENCODE_CONFIG" \
   "$CODEX_PROFILE" \
   "$AIDER_CONFIG" \
@@ -139,6 +141,15 @@ link_file "$DOTFILES_DIR/ghostty/config" "$GHOSTTY_CONFIG"
 # Starship is managed by stellar (https://stellar.a3chron.dev), not symlinked.
 # The old hand-rolled config is kept for reference only, at starship/starship.toml.
 link_file "$DOTFILES_DIR/tmux/tmux.conf" "$TMUX_CONFIG"
+# herdr is installed by its own installer into ~/.local/bin (not the Brewfile:
+# ~/.local/bin precedes /opt/homebrew/bin, so a brew copy would be shadowed).
+# Only link the config, and only if herdr is actually present — a machine that
+# never installed herdr should not grow an empty ~/.config/herdr.
+if command -v herdr >/dev/null 2>&1; then
+  link_file "$DOTFILES_DIR/herdr/config.toml" "$HERDR_CONFIG"
+else
+  echo "skip: herdr config (herdr not installed — see herdr/README.md)"
+fi
 link_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$OPENCODE_CONFIG"
 link_file "$DOTFILES_DIR/codex/dotfiles.config.toml" "$CODEX_PROFILE"
 link_file "$DOTFILES_DIR/aider/aider.conf.yml" "$AIDER_CONFIG"
@@ -183,14 +194,23 @@ stellar completion fish >"$FISH_DIR/completions/stellar.fish" 2>/dev/null ||
   echo "warning: could not write stellar completions"
 echo "stellar theme -> $(stellar current 2>/dev/null | head -n 5 | tr '\n' ' ')"
 
+# herdr ships its own completions. Generate them from the installed binary so
+# they match its version, and write to the live fish dir rather than the repo
+# so installs never leave the working tree dirty.
+if command -v herdr >/dev/null 2>&1; then
+  herdr completion fish >"$FISH_DIR/completions/herdr.fish" 2>/dev/null &&
+    echo "herdr completions -> $FISH_DIR/completions/herdr.fish" ||
+    echo "warning: could not write herdr completions"
+fi
+
 report_login_shell
 
 cat <<EOF
 
 done. Notes:
 - Secrets: use 1Password refs (.env.example). Never commit .env.
-- Linked automatically: ghostty, tmux, opencode, fish, and the agent baselines
-  codex/dotfiles.config.toml + aider/aider.conf.yml.
+- Linked automatically: ghostty, tmux, opencode, herdr (when installed), fish,
+  and the agent baselines codex/dotfiles.config.toml + aider/aider.conf.yml.
 - Patched in place (backed up): ~/.zshrc gets a marked block that hands
   interactive zsh over to fish, so oc/cc/cx/al/an exist in every terminal.
   Delete the block to opt out, or one-shot with DOTFILES_FISH_HANDOFF=off zsh.

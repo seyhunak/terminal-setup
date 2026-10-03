@@ -77,6 +77,13 @@ abbr_if co  copilot
 abbr_if cn  cline
 abbr_if ad  aider
 abbr_if gem gemini
+# herdr — agent-aware terminal multiplexer. Not in the Brewfile: installed via
+# `curl -fsSL https://herdr.dev/install.sh | sh` into ~/.local/bin, which the
+# curl installer owns and `herdr update` keeps current. See herdr/README.md.
+abbr_if hd  herdr
+abbr_if hst herdr status
+abbr_if hal herdr agent list
+abbr_if hwl herdr worktree list
 # 1Password: inject secrets per-command, e.g. `opr --env-file=.env -- opencode`
 abbr -a opr 'op run --'
 # agentic workflows
