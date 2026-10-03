@@ -10,6 +10,13 @@
 ![tmux](https://img.shields.io/badge/sessions-tmux-40A02B?style=flat-square&logo=tmux&logoColor=white)
 ![1Password](https://img.shields.io/badge/secrets-1Password-0094F5?style=flat-square&logo=1password&logoColor=white)
 
+**Autonomous agent duo** — `Cmd+Shift+S` opens one window split three ways; the leader takes your input and dispatches to the worker, with lazygit under it:
+
+![duo](https://img.shields.io/badge/layout-leader_worker_git-8B5CF6?style=flat-square&logo=tmux&logoColor=white)
+![leader](https://img.shields.io/badge/leader-cline-8B5CF6?style=flat-square&logo=cline&logoColor=white)
+![dispatch](https://img.shields.io/badge/channel-agent--send-40A02B?style=flat-square)
+![isolation](https://img.shields.io/badge/isolation-worktrees-40A02B?style=flat-square&logo=git&logoColor=white)
+
 **Tools wired in** — every CLI below is declared in `Brewfile` and initialised in fish (or deliberately deferred; see the table):
 
 ![atuin](https://img.shields.io/badge/history-atuin-F26D5D?style=flat-square&logo=rust&logoColor=white)
@@ -41,7 +48,7 @@
 ![aider](https://img.shields.io/badge/aider-no_auto_commit-A3A3A3?style=flat-square)
 ![crush](https://img.shields.io/badge/crush-no_baseline-6E7681?style=flat-square)
 
-My macOS terminal setup: **Ghostty + Starship (stellar `a3chron/ctp-blue`) + Fish**, wired for agentic dev across seven agent CLIs. Nerd Font throughout.
+My macOS terminal setup: **Ghostty + Starship (stellar `a3chron/ctp-blue`) + Fish**, wired for agentic dev across seven agent CLIs, with a leader/worker agent duo on `Cmd+Shift+S`. Nerd Font throughout.
 
 ## Agents
 
@@ -51,7 +58,7 @@ My macOS terminal setup: **Ghostty + Starship (stellar `a3chron/ctp-blue`) + Fis
 | `cc` / `ccr` | claude | ✅ `claude/settings.shared.json` | merge-only; live hooks and plugins stay yours |
 | `cx` / `cxr` | codex | ✅ `~/.codex/dotfiles.config.toml` | profile layer via `codex -p dotfiles`; sandbox `workspace-write`, approval `on-request` |
 | `co` | copilot | ⚠️ `copilot/settings.shared.json` | merge-only; `allowedTools`/`deniedTools` exist but were **not** enforced in `-p` mode in testing |
-| `cn` | cline | — | wrapper in `fish/functions/cline.fish` re-signs the macOS binary; no config file to baseline |
+| `cn` | cline | — | wrapper in `fish/functions/cline.fish` re-signs the macOS binary; no config file to baseline. Default agent in the duo. Bare `cline` is one-shot (use `-i`); `--auto-approve` defaults to **true** upstream |
 | `ad` | aider | ✅ `~/.aider.conf.yml` | auto-commits off, dirty-commits off, no analytics |
 | `cr` | crush | — | config is provider-only (`crush.json` has just `providers`); permissions are interactive prompts. Avoid `--yolo` |
 | `gem` | gemini | — | shortcut registers only if the binary is present |
@@ -64,13 +71,14 @@ Every shortcut is registered **only when its binary exists**, so a fresh clone o
 
 | Path | Target | Notes |
 |------|--------|-------|
-| `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups, `Cmd+Shift+A` agent layout |
+| `ghostty/config` | `~/.config/ghostty/config` | JetBrainsMono Nerd, Catppuccin Latte/Mocha auto, Quake dropdown, `fish` login shell, splits + lazygit/yazi popups, `Cmd+Shift+A` agent layout, `Cmd+Shift+S` leader/worker duo |
 | `starship/starship.toml` | archived, see [starship/README.md](starship/README.md) | old hand-rolled prompt, kept for reference only — nothing links or reads it |
 | `stellar` | `~/.config/starship.toml` -> `~/.config/stellar/a3chron/ctp-blue/1.1.toml` | `stellar apply a3chron/ctp-blue`, completions generated into `~/.config/fish/completions/` |
-| `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf/atuin init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `tf`, `proc`, `op-env`, `agent-new`, vi bindings |
+| `fish/` | `~/.config/fish/` | starship/zoxide/fzf/mise/direnv/asdf/atuin init, eza abbrs, agent abbrs (`oc/cc/cx/cr`), `tf`, `proc`, `op-env`, `agent-new`, `agent-duo`, vi bindings |
 | `zsh/zshrc-fish-handoff.zsh` | spliced into `~/.zshrc` between markers | hands interactive zsh to fish, so the agent abbrs work outside Ghostty too. Never symlinks over your `.zshrc`; delete the block to opt out, or `DOTFILES_FISH_HANDOFF=off zsh` one-shot |
 | `tmux/tmux.conf` | `~/.tmux.conf` | Truecolor for Ghostty, vi copy, 100k history, Catppuccin Latte status |
-| `scripts/` | on PATH via fish | `agent-layout.sh` (editor/agent/server tmux session), `git-worktree-add.sh` (isolated worktree per agent) |
+| `scripts/` | on PATH via fish | `agent-layout.sh` (editor/agent/server tmux session), `agent-duo.sh` + `agent-send.sh` (leader/worker duo), `git-worktree-add.sh` (isolated worktree per agent) |
+| `agents/leader-brief.md` | pasted into the leader pane by `duo` | the leader's operating instructions: dispatch protocol, one task at a time, verify before reporting done |
 | `opencode/opencode.jsonc` | `~/.config/opencode/opencode.jsonc` | Read-only shell allowlist, deny rules for credential paths, filesystem + GitHub (opt-in) MCP, secrets from env |
 | `codex/dotfiles.config.toml` | `~/.codex/dotfiles.config.toml`, used via `cx` | **Profile layer**, not a replacement: `sandbox_mode = "workspace-write"`, `approval_policy = "on-request"`. Your `~/.codex/config.toml` (model, marketplaces, plugins, trust) is untouched |
 | `aider/aider.conf.yml` | `~/.aider.conf.yml` | No auto-commits, no dirty-tree commits, no analytics, no update check |
@@ -127,6 +135,8 @@ Reload Ghostty with `Cmd+Shift+,` and open a new tab — or just `exec fish`.
 | abbr | runs | what it does |
 |------|------|--------------|
 | `al` | `agent-layout.sh` | tmux session `agent` with windows `editor` / `agent` / `server` |
+| `duo` | `agent-duo` | tmux session `duo`: leader / worker / lazygit in one window (below) |
+| `ax` | `agent-send.sh` | dispatch text to the worker's pane, or read it back |
 | `wt` | `git-worktree-add.sh` | isolated worktree on a new branch, prints the path on stdout |
 | `an` | `agent-new` | `wt` plus a tmux window opened in that worktree |
 | `opr` / `op-env` | — | run any command with secrets injected from 1Password |
@@ -147,6 +157,48 @@ op-env .env -- claude           # scoped to an env file of op:// refs
 
 `opr` and `op-env` are the ones that matter for safety: secrets exist only for that single command and are never exported into your shell. `.env` holds `op://` references, never real values — set it up with `op inject -i .env.example -o .env`.
 
+### The leader/worker duo
+
+`duo` opens one tmux window split three ways: the **leader** takes your input on the left, the **worker** executes on the right, and **lazygit** sits under the worker.
+
+```
+┌────────────────────────────┬─────────────────────┐
+│ pane 1  leader             │ pane 2  worker      │
+│ cline — you talk to this   │ cline — does the    │
+│ one. It plans and          │ dispatched tasks    │
+│ dispatches, never edits.   │                     │
+├────────────────────────────┼─────────────────────┤
+│                            │ pane 3  git         │
+│                            │ lazygit             │
+└────────────────────────────┴─────────────────────┘
+```
+
+```fish
+duo                # current directory
+duo my-feature     # + a worktree, so both agents share one branch off main
+ax "add the retry to the fetch path"   # leader -> worker
+ax --file /tmp/task.md   # multiline brief
+ax --capture            # read the worker's output back
+ax --capture -S -200    # ...including scrollback
+```
+
+In Ghostty: `Cmd+Shift+S`. Inside tmux: `prefix+1` / `prefix+2` / `prefix+3` jump to leader / worker / git.
+
+Both agents are started as `cline -i --auto-approve false`. Two details worth knowing:
+
+- **`-i` is required.** Bare `cline` is a *one-shot* run that exits when the task finishes, so a pane launched that way looks dead. `-i` opens the interactive TUI.
+- **`--auto-approve false` is explicit on purpose.** cline defaults auto-approve to **true**; this repo's rule is no unattended approvals, so it is turned off. The leader brief says the same thing.
+
+The leader does not share a TTY with the worker — it dispatches through `agent-send.sh`, which pastes via a tmux buffer rather than `send-keys`, so newlines, quotes, `$VAR` and literal `C-c` arrive as text instead of being interpreted as keystrokes. Panes are identified by a tmux user option (`@agent_role`), not `pane_title`: fish's title integration rewrites `pane_title`, so titles are not a stable key.
+
+The leader starts with `agents/leader-brief.md` pasted in as its opening prompt, which tells it the dispatch protocol, to send one task at a time, to verify the worker's output itself before reporting done, and to ask you rather than guess.
+
+Mix in the other agents by overriding the commands:
+
+```fish
+AGENT_DUO_LEADER_CMD='claude' AGENT_DUO_WORKER_CMD='codex -p dotfiles' duo
+```
+
 ### Agent shortcuts
 
 ```fish
@@ -156,6 +208,8 @@ cx / cxr    codex -p dotfiles, codex -p dotfiles resume --last
 co          copilot
 cn          cline      ad aider      gem gemini      cr crush
 ```
+
+`cn` is `cline`, the default agent in the duo layout. Two cline specifics: bare `cline` is a **one-shot** run that exits when done (use `cline -i` for the interactive TUI), and `--auto-approve` defaults to **true** upstream — `duo` passes `--auto-approve false` to keep the no-unattended-approvals rule.
 
 Safe by default — no `--yolo`, no `--dangerously-bypass-approvals`. `cx` selects the `dotfiles` profile (`sandbox_mode = "workspace-write"`, `approval_policy = "on-request"`) layered on top of your own `~/.codex/config.toml`. Each shortcut registers only if its binary exists, so a clone on a machine without aider doesn't collect dead abbrs.
 
@@ -179,6 +233,9 @@ Treat it as a guardrail, not the control. Per the copilot test above, `deniedToo
 al                               # editor / agent / server
 # in the agent window:
 oc                              # start opencode
+duo my-feature                  # leader/worker duo on its own worktree
+ax "do the thing"               # leader dispatches to the worker
+ax --capture                    # leader reads the worker's result
 an fix-auth-bug                # parallel agent, own branch + own tmux window
 wt spike-another-thing         # just the worktree
 opr -- opencode                # if the run needs a token
@@ -190,7 +247,7 @@ opr -- opencode                # if the run needs a token
 
 ## Key bits
 
-- **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Cmd+Shift+A` agent tmux layout, `Ctrl+`` Quake terminal
+- **Ghostty:** `Cmd+D` / `Cmd+Shift+D` splits, `Cmd+Alt+arrows` navigate, `Cmd+G` lazygit, `Cmd+Shift+O` yazi, `Cmd+Shift+A` agent tmux layout, `Cmd+Shift+S` leader/worker duo, `Ctrl+`` Quake terminal
 - **Starship (stellar `a3chron/ctp-blue@1.1`, `catppuccin_mocha`):** 3-line box — shell/nix/memory + node/python/go/ocaml → user/host/dir/git/cmd-duration → battery + `──╌╌`. Old powerline config archived; `mise`/`direnv`/`docker` segments not in upstream theme.
 - **Fish:** `ls`/`ll` via eza, `g` lazygit, `v` nvim, `y` yazi, `opr` 1Password runner, `al`/`wt`/`an` agentic workflows, greeting off, `fish_vi_key_bindings`
 - **Secrets:** `.env` is git-ignored (only `.env.example` is tracked), and both agent baselines that support it deny `read`/`cat`/`head`/`tail` on `.env`, `*.pem`, `*.key`, `id_rsa*`, `~/.ssh/`, `~/.aws/`, `~/.netrc` and `~/.config/gh/hosts.yml`. opencode's `external_directory` denies by default. copilot and cline are the exceptions — see the Agents table.

@@ -81,6 +81,8 @@ abbr_if gem gemini
 abbr -a opr 'op run --'
 # agentic workflows
 abbr -a al 'agent-layout.sh'
+abbr -a duo 'agent-duo'
+abbr -a ax 'agent-send.sh'
 abbr -a wt 'git-worktree-add.sh'
 abbr -a an 'agent-new'
 

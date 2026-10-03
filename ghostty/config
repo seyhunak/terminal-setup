@@ -81,6 +81,10 @@ keybind = chain=text:yazi\x0d
 keybind = cmd+shift+a=new_tab
 keybind = chain=text:agent-layout.sh\x0d
 
+# leader/worker duo (left cline leader, right cline worker, right lazygit)
+keybind = cmd+shift+s=new_tab
+keybind = chain=text:agent-duo\x0d
+
 # Font size
 keybind = cmd+plus=increase_font_size:1
 keybind = cmd+minus=decrease_font_size:1
